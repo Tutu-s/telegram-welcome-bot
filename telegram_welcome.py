@@ -31,7 +31,7 @@ def ping():
 def greet_new_member(message):
     for user in message.new_chat_members:
         text = (
-            f"👋 {user.first_name}님, 반갑습니다❣️\n"
+            f"👋 {message.chat.id}님, 반갑습니다❣️\n"
             f"비즈LIKE 동아리에 오신걸 환영합니다🎉\n"
             f"모임 참석 전 상단에 고정돼있는 동아리 소개글을 필독해주세요🙏🙏"
         )
