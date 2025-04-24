@@ -1,3 +1,5 @@
 pyTelegramBotAPI
 python-dotenv
 flask
+schedule
+pytz
