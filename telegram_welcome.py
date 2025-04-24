@@ -6,6 +6,7 @@ import threading
 from dotenv import load_dotenv
 from flask import Flask, request
 from datetime import datetime
+import pytz
 
 # .env 환경변수 불러오기
 load_dotenv()
@@ -34,7 +35,7 @@ def greet_new_member(message):
             f"비즈LIKE 동아리에 오신걸 환영합니다🎉\n"
             f"모임 참석 전 상단에 고정돼있는 동아리 소개글을 필독해주세요🙏🙏"
         )
-        bot.send_message(chat_id=CHAT_ID, text=text, message_thread_id=int(os.getenv("TOPIC1_ID"))
+        bot.send_message(chat_id=CHAT_ID, text=text, message_thread_id=TOPIC1_ID)
 
 # 테스트 코드
 @bot.message_handler(func=lambda message: True)
@@ -56,7 +57,7 @@ def weekly_announcement():
         f"3/\n"
         f"4/\n"
     )
-    bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=int(os.getenv("TOPIC2_ID"))
+    bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=TOPIC2_ID)
 
 schedule.every().monday.at("09:00").do(weekly_announcement)
 
