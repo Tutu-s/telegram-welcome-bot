@@ -36,7 +36,12 @@ def greet_new_member(message):
         )
         bot.send_message(chat_id=CHAT_ID, text=text, message_thread_id=int(os.getenv("TOPIC1_ID"))
 
+# 테스트 코드
+@bot.message_handler(func=lambda message: True)
+def debug_topic_id(message):
+    print(f"[디버그] 토픽 ID: {message.message_thread_id}")
 
+                         
 # 2. 매주 월요일 09:00에 공지 메시지 전송
 def weekly_announcement():
     now = datetime.now().strftime("%Y-%m-%d")
