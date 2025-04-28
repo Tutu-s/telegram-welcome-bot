@@ -9,6 +9,9 @@ load_dotenv()
 # 텔레그램 봇 초기화
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(TOKEN)
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")  # 그룹 채팅 ID
+TOPIC1_ID = int(os.getenv("TOPIC1_ID"))  # 인사용 토픽 ID
+TOPIC2_ID = int(os.getenv("TOPIC2_ID"))  # 공지용 토픽 ID
 
 # Flask 앱 생성
 app = Flask(__name__)
@@ -27,7 +30,7 @@ def greet_new_member(message):
             f"비즈LIKE 동아리에 오신걸 환영합니다🎉\n"
             f"모임 참석 전 상단에 고정돼있는 동아리 소개글을 필독해주세요🙏🙏"
         )
-        bot.send_message(message.chat.id, welcome_message)
+        bot.send_message(CHAT_ID, welcome_message, TOPIC1_ID)
 
 # Flask 서버와 봇 polling을 동시에 실행하기 위한 스레딩
 import threading
