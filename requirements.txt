@@ -3,3 +3,6 @@ python-dotenv
 flask
 schedule
 pytz
+gspread
+google-auth
+google-auth-oauthlib
