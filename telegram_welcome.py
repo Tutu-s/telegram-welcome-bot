@@ -9,7 +9,7 @@ load_dotenv()
 # 텔레그램 봇 초기화
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(TOKEN)
-CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")  # 그룹 채팅 ID
+CHAT_ID = int(os.getenv("TELEGRAM_CHAT_ID"))  # 그룹 채팅 ID
 TOPIC1_ID = int(os.getenv("TOPIC1_ID"))  # 인사용 토픽 ID
 TOPIC2_ID = int(os.getenv("TOPIC2_ID"))  # 공지용 토픽 ID
 
