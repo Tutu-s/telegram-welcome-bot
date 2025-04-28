@@ -57,7 +57,7 @@ KST = pytz.timezone("Asia/Seoul")
 def run_scheduler():
     while True:
         now = datetime.now(KST)
-        if now.weekday() == 0 and now.hour == 17 and now.minute == 02:
+        if now.weekday() == 0 and now.hour == 17 and now.minute == 8:
             weekly_announcement()
             time.sleep(60)  # 1분 대기 (중복 방지)
         time.sleep(30)  # 체크 간격
