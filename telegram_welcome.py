@@ -30,7 +30,7 @@ def greet_new_member(message):
             f"비즈LIKE 동아리에 오신걸 환영합니다🎉\n"
             f"모임 참석 전 상단에 고정돼있는 동아리 소개글을 필독해주세요🙏🙏"
         )
-        bot.send_message(CHAT_ID, welcome_message, TOPIC1_ID)
+        bot.send_message(chat_id=CHAT_ID, text=welcome_message, message_thread_id=TOPIC1_ID)
 
 # Flask 서버와 봇 polling을 동시에 실행하기 위한 스레딩
 import threading
