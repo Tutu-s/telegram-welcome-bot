@@ -1,7 +1,11 @@
 import telebot
 import os
+import threading
 from dotenv import load_dotenv
 from flask import Flask, request
+from datetime import datetime
+import time
+import pytz
 
 # .env 환경변수 불러오기
 load_dotenv()
@@ -32,13 +36,38 @@ def greet_new_member(message):
         )
         bot.send_message(chat_id=CHAT_ID, text=welcome_message, message_thread_id=TOPIC1_ID)
 
-# Flask 서버와 봇 polling을 동시에 실행하기 위한 스레딩
-import threading
+# 매주 월요일 오전 9시 (한국 시간) 공지 전송 함수
+def weekly_announcement():
+    now = datetime.now(KST).strftime("%Y-%m-%d")
+    message = (
+         f"☘️비즈LIKE 모임 취합☘️\n"
+         f"\n"
+         f"참석자/재료준비(개인or공구)/사진첨부/재료비 입금\n"
+         f"예)임정민/공구/0/0\n"
+         f"\n"
+         f"1/\n"
+         f"2/\n"
+         f"3/\n"
+         f"4/\n"
+    )
+    bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=TOPIC2_ID))  # 공지 전용 토픽
 
+# 한국 시간 기준으로 월요일 9시에 공지를 보내는 스케줄러
+KST = pytz.timezone("Asia/Seoul")
+def run_scheduler():
+    while True:
+        now = datetime.now(KST)
+        if now.weekday() == 0 and now.hour == 17 and now.minute == 02:
+            weekly_announcement()
+            time.sleep(60)  # 1분 대기 (중복 방지)
+        time.sleep(30)  # 체크 간격
+
+# Flask 서버와 봇 polling을 동시에 실행하기 위한 스레딩
 def run_bot():
     bot.remove_webhook()  # 충돌 방지를 위해 웹훅 제거
     bot.infinity_polling()
 
 if __name__ == "__main__":
     threading.Thread(target=run_bot).start()
+    threading.Thread(target=run_scheduler).start()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
