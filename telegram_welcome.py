@@ -50,7 +50,7 @@ def weekly_announcement():
          f"3/\n"
          f"4/\n"
     )
-    bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=TOPIC2_ID))  # 공지 전용 토픽
+    bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=TOPIC2_ID)  # 공지 전용 토픽
 
 # 한국 시간 기준으로 월요일 9시에 공지를 보내는 스케줄러
 KST = pytz.timezone("Asia/Seoul")
