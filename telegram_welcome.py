@@ -40,15 +40,10 @@ def greet_new_member(message):
 def weekly_announcement():
     now = datetime.now(KST).strftime("%Y-%m-%d")
     message = (
-         f"☘️비즈LIKE 모임 취합☘️\n"
+         f"오늘 공동 구매 취합 마감입니다!\n"
+         f"아직 취합 못하신 분들은 빠르게 해주시고 이후로는 공동 구매 불가능하고 개인이 들고 오셔야 합니다!\n"
          f"\n"
-         f"참석자/재료준비(개인or공구)/사진첨부/재료비 입금\n"
-         f"예)임정민/공구/0/0\n"
-         f"\n"
-         f"1/\n"
-         f"2/\n"
-         f"3/\n"
-         f"4/\n"
+         f"‼️수다방 고정 메세지 필수 확인‼️\n"
     )
     bot.send_message(chat_id=CHAT_ID, text=message, message_thread_id=TOPIC2_ID)  # 공지 전용 토픽
 
@@ -57,7 +52,7 @@ KST = pytz.timezone("Asia/Seoul")
 def run_scheduler():
     while True:
         now = datetime.now(KST)
-        if now.weekday() == 0 and now.hour == 17 and now.minute == 8:
+        if now.weekday() == 3 and now.hour == 12 and now.minute == 30:
             weekly_announcement()
             time.sleep(60)  # 1분 대기 (중복 방지)
         time.sleep(30)  # 체크 간격
