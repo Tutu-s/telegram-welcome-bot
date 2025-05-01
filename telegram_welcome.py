@@ -40,8 +40,8 @@ def greet_new_member(message):
 def weekly_announcement():
     now = datetime.now(KST).strftime("%Y-%m-%d")
     message = (
-         f"오늘 공동 구매 취합 마감입니다!\n"
-         f"아직 취합 못하신 분들은 빠르게 해주시고 이후로는 공동 구매 불가능하고 개인이 들고 오셔야 합니다!\n"
+         f"진짜 진짜 마감합니다!!\n"
+         f"이후로는 개인 준비 부탁드려요!!\n"
          f"\n"
          f"‼️수다방 고정 메세지 필수 확인‼️\n"
     )
@@ -52,7 +52,7 @@ KST = pytz.timezone("Asia/Seoul")
 def run_scheduler():
     while True:
         now = datetime.now(KST)
-        if now.weekday() == 3 and now.hour == 12 and now.minute == 30:
+        if now.weekday() == 3 and now.hour == 22 and now.minute == 0:
             weekly_announcement()
             time.sleep(60)  # 1분 대기 (중복 방지)
         time.sleep(30)  # 체크 간격
