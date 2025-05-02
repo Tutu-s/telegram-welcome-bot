@@ -34,7 +34,7 @@ def greet_new_member(message):
             f"비즈LIKE 동아리에 오신걸 환영합니다🎉\n"
             f"모임 참석 전 상단에 고정돼있는 동아리 소개글을 필독해주세요🙏🙏"
         )
-        bot.send_message(chat_id=CHAT_ID, text=welcome_message, message_thread_id=TOPIC1_ID)
+        bot.send_message(message.chat.id, welcome_message)
 
 # 매주 월요일 오전 9시 (한국 시간) 공지 전송 함수
 def weekly_announcement():
