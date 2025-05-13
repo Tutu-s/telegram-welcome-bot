@@ -106,24 +106,25 @@ bot = telebot.TeleBot(BASE_TOKEN, threaded=False)
 
 @bot.message_handler(content_types=['new_chat_members'])
 def handle_new_members(message):
-    for cfg in welcome_list:
-        if message.chat.id == cfg["chat_id"]:
-            # 메시지에 사용자 이름 적용
-            try:
-                personalized = cfg["message"].format(new_user=new_user)
-            except Exception as e:
-                print(f"[Format Error] {e}")
-                personalized = cfg["message"]  # 실패 시 원본 메시지
-                
-            kwargs = {
-                "chat_id": cfg["chat_id"],
-                "text": cfg["message"]
-            }
-            # topic_id가 2 이상일 때만 스레드 파라미터 추가
-            if cfg["topic_id"] not in (0, 1):
-                kwargs["message_thread_id"] = cfg["topic_id"]
-            bot.send_message(**kwargs)
-            print(f"[Welcome] sent to chat {cfg['chat_id']}")
+    for new_user in message.new_chat_members:
+        for cfg in welcome_list:
+            if message.chat.id == cfg["chat_id"]:
+                # 메시지에 사용자 이름 적용
+                try:
+                    personalized = cfg["message"].format(new_user=new_user)
+                except Exception as e:
+                    print(f"[Format Error] {e}")
+                    personalized = cfg["message"]  # 실패 시 원본 메시지
+
+                kwargs = {
+                    "chat_id": cfg["chat_id"],
+                    "text": personalized
+                }
+                # topic_id가 2 이상일 때만 스레드 파라미터 추가
+                if cfg["topic_id"] not in (0, 1):
+                    kwargs["message_thread_id"] = cfg["topic_id"]
+                bot.send_message(**kwargs)
+                print(f"[Welcome] sent to chat {cfg['chat_id']}")
 
 # ─── 스케줄러 헬퍼 & 루프 ───────────────────────────────────────────────────────
 def sleep_until_next_minute():
