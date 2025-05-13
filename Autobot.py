@@ -108,6 +108,13 @@ bot = telebot.TeleBot(BASE_TOKEN, threaded=False)
 def handle_new_members(message):
     for cfg in welcome_list:
         if message.chat.id == cfg["chat_id"]:
+            # 메시지에 사용자 이름 적용
+            try:
+                personalized = cfg["message"].format(new_user=new_user)
+            except Exception as e:
+                print(f"[Format Error] {e}")
+                personalized = cfg["message"]  # 실패 시 원본 메시지
+                
             kwargs = {
                 "chat_id": cfg["chat_id"],
                 "text": cfg["message"]
