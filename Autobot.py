@@ -22,9 +22,17 @@ PORT             = int(os.getenv("PORT", 5000))
 # ─── Flask 앱 (헬스체크) ────────────────────────────────────────────────────────
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+def root():
+    return "OK", 200  # UptimeRobot 기본 경로 대응
+
 @app.route("/ping", methods=["GET"])
 def ping():
-    return "pong", 200
+    return "pong", 200  # 기존 유지
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204  # 404 방지
 
 # ─── 시간대 설정 ───────────────────────────────────────────────────────────────
 KST = pytz.timezone("Asia/Seoul")
