@@ -247,6 +247,63 @@ if bot: # bot 객체가 성공적으로 생성된 경우에만 핸들러 등록
                     except Exception as e:
                         logger.error(f"[NEW_MEMBER] 환영 메시지 전송 실패 (설정 행: {cfg.get('row_num', 'N/A')}): {e}", exc_info=True)
 
+# 기존 코드의 def handle_new_members 함수 아래 등 적절한 위치에 추가합니다.
+# 텔레 아이디 찾기
+if bot: # 텔레그램 봇 객체가 있는지 다시 한번 확인
+    @bot.message_handler(commands=['myid', 'getid', '나의아이디']) # 'myid', 'getid', '나의아이디' 명령어에 반응
+    def get_my_user_id(message):
+        """
+        사용자의 User ID를 알려주는 핸들러
+        """
+        user_id = message.from_user.id
+        first_name = message.from_user.first_name # 사용자 이름
+        last_name = message.from_user.last_name # 사용자 성 (없을 수도 있음)
+        username = message.from_user.username # 사용자 이름 (@username, 없을 수도 있음)
+
+        # 사용자에게 보여줄 응답 메시지 생성
+        # MarkdownV2 형식으로 ID를 백틱(`)으로 감싸서 강조
+        response_text = f"**{first_name}** 님의 텔레그램 User ID는 `{user_id}` 입니다."
+
+        # 추가 정보 (선택 사항)
+        user_info_parts = []
+        if last_name:
+            user_info_parts.append(last_name)
+        if username:
+             user_info_parts.append(f"(@{username})")
+
+        if user_info_parts:
+             response_text += f" {' '.join(user_info_parts)}"
+
+
+        logger.info(f"사용자 {first_name} (ID: {user_id}) 로부터 /myid 명령어 수신.")
+
+        try:
+            # 사용자 ID를 요청한 사용자에게 개인 메시지로 ID를 보내는 것을 시도합니다.
+            # message.from_user.id는 개인 챗 ID와 동일합니다.
+            # parse_mode='MarkdownV2'를 사용하여 메시지 형식을 적용합니다.
+            bot.send_message(message.from_user.id, response_text, parse_mode='MarkdownV2')
+            logger.info(f"User ID {user_id}를 개인 메시지로 성공적으로 전송했습니다.")
+
+            # 만약 명령어가 그룹에서 사용되었다면, 그룹에는 확인 메시지만 보냅니다.
+            if message.chat.id != message.from_user.id:
+                 try:
+                     bot.send_message(message.chat.id, f"{first_name} 님의 User ID를 개인 메시지로 보내드렸습니다.", reply_to_message_id=message.message_id)
+                     logger.debug(f"그룹 {message.chat.id}에 User ID 개인 메시지 발송 확인 메시지 전송.")
+                 except Exception as e_group_ack:
+                     logger.error(f"그룹 {message.chat.id}에 확인 메시지 전송 실패: {e_group_ack}", exc_info=True)
+
+        except Exception as e_private_send:
+            # 개인 메시지 전송에 실패했을 경우 (예: 사용자가 봇에게 먼저 개인 메시지를 보내지 않은 경우)
+            logger.warning(f"User ID {user_id}에게 개인 메시지 전송 실패: {e_private_send}")
+            logger.info(f"그룹 {message.chat.id}으로 User ID를 대신 전송 시도.")
+            try:
+                # 그룹 채팅으로 User ID를 대신 보냅니다.
+                bot.send_message(message.chat.id, response_text, parse_mode='MarkdownV2', reply_to_message_id=message.message_id)
+                logger.info(f"User ID {user_id}를 그룹 {message.chat.id}으로 대신 전송 성공.")
+            except Exception as e_group_send:
+                 logger.error(f"User ID {user_id}를 그룹 {message.chat.id}으로 대신 전송 실패: {e_group_send}", exc_info=True)
+
+
 
 # ─── 스케줄러 헬퍼 & 루프 ───────────────────────────────────────────────────────
 def sleep_until_next_minute():
