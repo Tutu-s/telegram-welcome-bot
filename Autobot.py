@@ -12,6 +12,34 @@ from oauth2client.service_account import ServiceAccountCredentials # type: ignor
 from dotenv import load_dotenv
 import telebot # type: ignore
 from gspread.exceptions import APIError
+import re # re 모듈 추가
+
+# ─────── MarkdownV2 이스케이프 헬퍼 함수 ──────────────
+def escape_markdownv2(text):
+    """
+    MarkdownV2에서 예약된 문자를 이스케이프 처리합니다.
+    """
+    if text is None:
+        return ''
+    text = str(text)
+    # MarkdownV2에서 예약된 모든 문자 목록
+    # _, *, [, ], (, ), ~, `, >, #, +, -, =, |, {, }, ., !
+    # 정규 표현식을 사용하여 이 문자들을 찾고 앞에 '\'를 붙여줍니다.
+    # '['나 ']' 같은 문자는 정규식 패턴 안에서 특별한 의미를 가질 수 있으므로 패턴 자체를 raw string으로 사용하거나 이중 이스케이프가 필요할 수 있습니다.
+    # 여기서는 간단하게 각 문자에 대해 replace 하는 방식을 사용합니다.
+    # 더 견고한 처리를 위해 re.sub을 사용할 수도 있습니다.
+    
+    # 간단한 replace 방식 (일부 복잡한 경우에 문제될 수 있으나 대부분의 이름/문장에서 작동)
+    # for char in r'_*[]()~`>#+-=|{}.!':
+    #    text = text.replace(char, f'\\{char}')
+    # return text
+
+    # re.sub 방식 (더 강력)
+    # 패턴 내에서 정규식 특별 문자는 이스케이프 해줘야 합니다 (\, [, ], (, ), {, }, |, ., +, *, ?, ^, $).
+    # 우리는 예약 문자 자체를 찾는 패턴을 만듭니다.
+    reserved_chars_pattern = r'([_*\[\]()~`>#\+\-=\|\{\}\.!])'
+    # 찾은 각 문자를 '\'와 그 문자(\1)로 치환
+    return re.sub(reserved_chars_pattern, r'\\\1', text)
 
 # ─── 로깅 설정 ────────────────────────────────────────────────────────────────
 # 기본 로깅 레벨은 INFO, 필요시 DEBUG로 변경하여 더 자세한 로그 확인 가능
@@ -247,8 +275,9 @@ if bot: # bot 객체가 성공적으로 생성된 경우에만 핸들러 등록
                     except Exception as e:
                         logger.error(f"[NEW_MEMBER] 환영 메시지 전송 실패 (설정 행: {cfg.get('row_num', 'N/A')}): {e}", exc_info=True)
 
-# 기존 코드의 def handle_new_members 함수 아래 등 적절한 위치에 추가합니다.
-# 텔레 아이디 찾기
+# --- get_my_user_id 함수 수정 ---
+# 기존 get_my_user_id 함수를 찾아서 내부 내용만 아래와 같이 수정합니다.
+
 if bot: # 텔레그램 봇 객체가 있는지 다시 한번 확인
     @bot.message_handler(commands=['myid', 'getid', '나의아이디']) # 'myid', 'getid', '나의아이디' 명령어에 반응
     def get_my_user_id(message):
@@ -256,52 +285,71 @@ if bot: # 텔레그램 봇 객체가 있는지 다시 한번 확인
         사용자의 User ID를 알려주는 핸들러
         """
         user_id = message.from_user.id
-        first_name = message.from_user.first_name # 사용자 이름
-        last_name = message.from_user.last_name # 사용자 성 (없을 수도 있음)
-        username = message.from_user.username # 사용자 이름 (@username, 없을 수도 있음)
-
-        # 사용자에게 보여줄 응답 메시지 생성
-        # MarkdownV2 형식으로 ID를 백틱(`)으로 감싸서 강조
-        response_text = f"**{first_name}** 님의 텔레그램 User ID는 `{user_id}` 입니다."
-
-        # 추가 정보 (선택 사항)
-        user_info_parts = []
-        if last_name:
-            user_info_parts.append(last_name)
-        if username:
-             user_info_parts.append(f"(@{username})")
-
-        if user_info_parts:
-             response_text += f" {' '.join(user_info_parts)}"
-
+        first_name = message.from_user.first_name
+        last_name = message.from_user.last_name
+        username = message.from_user.username
 
         logger.info(f"사용자 {first_name} (ID: {user_id}) 로부터 /myid 명령어 수신.")
 
+        # 사용자 이름, 성 등 MarkdownV2 예약 문자가 포함될 수 있는 부분을 이스케이프 처리
+        # User ID(숫자)는 이스케이프 불필요
+        # username의 '@'는 @username 형식에서는 예약 문자가 아닙니다.
+        escaped_first_name = escape_markdownv2(first_name) if first_name else ''
+        escaped_last_name = escape_markdownv2(last_name) if last_name else ''
+        # username 자체에 _ 등이 있다면 이스케이프 필요하지만, (@username) 포맷에서는 보통 문제되지 않음.
+        # 여기서는 username 자체를 이스케이프하지 않고 포맷에 넣습니다.
+
+
+        # 응답 메시지 텍스트 구성
+        # **굵게** 와 `코드` 문법은 그대로 두고, 문장 끝의 마침표(`.`)는 '\.'로 이스케이프합니다.
+        # 사용자 이름 등 변수 자리에는 이스케이프된 내용을 넣습니다.
+        response_text_main = f"**{escaped_first_name}** 님의 텔레그램 User ID는 `{user_id}` 입니다\." # 마지막 '.' 이스케이프
+
+        # 추가 정보 (선택 사항) 구성
+        user_info_parts_formatted = []
+        if escaped_last_name:
+            user_info_parts_formatted.append(escaped_last_name)
+        if username:
+            # @username 형식은 그대로 사용 (username 자체에 _ 등이 있다면 문제가 될 수 있으나 일반적으론 괜찮음)
+            user_info_parts_formatted.append(f"(@{username})")
+
+        # 최종 메시지 텍스트 조합
+        if user_info_parts_formatted:
+             final_response_text = response_text_main + " " + " ".join(user_info_parts_formatted)
+        else:
+             final_response_text = response_text_main
+
+
+        logger.debug(f"구성된 응답 메시지 (MarkdownV2): {final_response_text}")
+
+
         try:
-            # 사용자 ID를 요청한 사용자에게 개인 메시지로 ID를 보내는 것을 시도합니다.
-            # message.from_user.id는 개인 챗 ID와 동일합니다.
-            # parse_mode='MarkdownV2'를 사용하여 메시지 형식을 적용합니다.
-            bot.send_message(message.from_user.id, response_text, parse_mode='MarkdownV2')
+            # 1. 사용자에게 개인 메시지로 ID 보내기 (우선 시도, 프라이버시 보호)
+            # MarkdownV2를 사용하므로 이스케이프된 final_response_text 사용
+            bot.send_message(message.from_user.id, final_response_text, parse_mode='MarkdownV2')
             logger.info(f"User ID {user_id}를 개인 메시지로 성공적으로 전송했습니다.")
 
-            # 만약 명령어가 그룹에서 사용되었다면, 그룹에는 확인 메시지만 보냅니다.
+            # 명령어가 그룹에서 사용되었다면, 그룹에는 확인 메시지만 보냅니다.
             if message.chat.id != message.from_user.id:
                  try:
+                     # 그룹 확인 메시지는 MarkdownV2 예약 문자가 포함되지 않도록 간단하게 작성
                      bot.send_message(message.chat.id, f"{first_name} 님의 User ID를 개인 메시지로 보내드렸습니다.", reply_to_message_id=message.message_id)
                      logger.debug(f"그룹 {message.chat.id}에 User ID 개인 메시지 발송 확인 메시지 전송.")
                  except Exception as e_group_ack:
                      logger.error(f"그룹 {message.chat.id}에 확인 메시지 전송 실패: {e_group_ack}", exc_info=True)
 
         except Exception as e_private_send:
-            # 개인 메시지 전송에 실패했을 경우 (예: 사용자가 봇에게 먼저 개인 메시지를 보내지 않은 경우)
-            logger.warning(f"User ID {user_id}에게 개인 메시지 전송 실패: {e_private_send}")
-            logger.info(f"그룹 {message.chat.id}으로 User ID를 대신 전송 시도.")
+            # 2. 개인 메시지 전송 실패 시 (사용자가 봇에게 먼저 말을 걸지 않은 경우 등)
+            logger.warning(f"User ID {user_id}에게 개인 메시지 전송 실패: {e_private_send}. 대신 채팅방 {message.chat.id}으로 전송 시도.")
             try:
-                # 그룹 채팅으로 User ID를 대신 보냅니다.
-                bot.send_message(message.chat.id, response_text, parse_mode='MarkdownV2', reply_to_message_id=message.message_id)
-                logger.info(f"User ID {user_id}를 그룹 {message.chat.id}으로 대신 전송 성공.")
+                # 명령어가 온 원래 채팅방 (그룹 또는 개인)으로 메시지 전송
+                # 이 라인이 traceback에 표시된 라인이며, 여기서도 MarkdownV2를 사용하므로 이스케이프된 텍스트가 필수입니다.
+                bot.send_message(message.chat.id, final_response_text, parse_mode='MarkdownV2', reply_to_message_id=message.message_id)
+                logger.info(f"User ID {user_id}를 채팅방 {message.chat.id}으로 대신 전송 성공.")
             except Exception as e_group_send:
-                 logger.error(f"User ID {user_id}를 그룹 {message.chat.id}으로 대신 전송 실패: {e_group_send}", exc_info=True)
+                 logger.error(f"User ID {user_id}를 채팅방 {message.chat.id}으로 대신 전송 최종 실패: {e_group_send}", exc_info=True)
+
+# -------------------------------------
 
 
 
